@@ -9,6 +9,8 @@ const apiUrl = "https://ts-module-creator.onrender.com/cli/generate"; // Replace
 
 // Parse token from command line arguments
 const token = process.argv[2];
+const undoFlag = process.argv[3] === "-undo";
+
 if (!token) {
   console.error("Error: Token is required. Usage: npx temgen <token>");
   process.exit(1);
@@ -16,6 +18,7 @@ if (!token) {
 
 // Send API request to get the data
 async function fetchData(token) {
+  console.log("Fetching files from server...");
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {
@@ -33,54 +36,42 @@ async function fetchData(token) {
   return await response.json();
 }
 
-// Generate files and folders based on data
-async function generateFiles(data) {
-  for (const item of data) {
-    const filePath = path.join(
-      process.cwd(),
-      item.filePath || "",
-      item.fileName
-    );
-
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    // Write file content
-    fs.writeFileSync(filePath, item.content);
-  }
-}
-
-const createFiles = async (filesArray) => {
+function deleteFiles(jsonData) {
+  // First delete all files
   try {
-    // Loop through each file in the array
-    for (const file of filesArray) {
-      const filePath = file.filePath;
+    jsonData.forEach((file) => {
+      const fullFilePath = path.join(
+        process.cwd(),
+        file.filePath.split(`\\`).join("/")
+      );
+      fs.unlinkSync(fullFilePath);
+    });
+  } catch (error) {}
+  // Get unique directories from the jsonData
+  const directories = [
+    ...new Set(
+      jsonData.map((file) => {
+        const filePath = file.filePath.split(`\\`).join("/");
+        return path.dirname(path.join(process.cwd(), filePath));
+      })
+    )
+  ].sort((a, b) => b.length - a.length); // Sort by depth (deepest first)
 
-      // Handle files that start with a dot (like .gitignore, .eslintrc.json)
-      let dirPath = path.dirname(filePath);
-
-      // Prepend './' if the file starts with '.' but doesn't already start with './'
-      if (filePath.startsWith(".") && !filePath.startsWith("./")) {
-        filePath = `./${filePath}`;
-        dirPath = path.dirname(filePath);
+  // Try to delete each directory if empty
+  directories.forEach((dir) => {
+    try {
+      // Check if directory exists and is empty
+      if (fs.existsSync(dir)) {
+        const items = fs.readdirSync(dir);
+        if (items.length === 0) {
+          fs.rmdirSync(dir);
+        }
       }
-
-      // Create the directory structure if it doesn't exist
-      if (dirPath !== "." && dirPath !== "./") {
-        await fs.promises.mkdir(dirPath, { recursive: true });
-        console.log(`Directory created: ${dirPath}`);
-      }
-
-      // Write the file with the provided content
-      await fs.promises.writeFile(filePath, file.content, "utf8");
-      console.log(`File created: ${filePath}`);
+    } catch (error) {
+      // Ignore errors (directory might not be empty or might have permissions issues)
     }
-  } catch (error) {
-    console.error("Error creating files and folders:", error);
-  }
-};
-
+  });
+}
 // Call the function
 
 function jsonToFiles(jsonData, rootDir) {
@@ -111,11 +102,11 @@ function jsonToFiles(jsonData, rootDir) {
 (async () => {
   try {
     const data = await fetchData(token);
-    jsonToFiles(data.data, process.cwd());
-    // await generateFiles(data.data);
-
-    // // Optional: create a zip archive
-    // await createArchive("output.zip", data);
+    if (!undoFlag) {
+      jsonToFiles(data.data, process.cwd());
+    } else {
+      deleteFiles(data.data);
+    }
   } catch (error) {
     console.error("Error:", error);
   }
