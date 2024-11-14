@@ -1,13 +1,23 @@
 {
   "name": "temgen",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "A CLI tool to generate templates for MERN stack applications, including React, Redux, Next.js, Node.js, Mongoose, PostgreSQL, and Prisma configurations.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mern",
+    "template generator",
+    "react",
+    "redux",
+    "next.js",
+    "node.js",
+    "mongoose",
+    "postgresql",
+    "prisma"
+  ],
+  "author": "Your Name",
   "license": "ISC",
   "type": "module",
   "bin": {
@@ -15,7 +25,14 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
-    "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naimur53/temgen.git"
+  },
+  "homepage": "https://temgen.app",
+  "bugs": {
+    "url": "https://github.com/naimur53/temgen/issues"
   }
 }

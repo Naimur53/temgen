@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import archiver from "archiver";
 
-const apiUrl = "http://localhost:5001/cli/generate"; // Replace with your API URL
+const apiUrl = "https://ts-module-creator.onrender.com/cli/generate"; // Replace with your API URL
 
 // Parse token from command line arguments
 const token = process.argv[2];
