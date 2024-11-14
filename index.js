@@ -16,7 +16,6 @@ if (!token) {
 
 // Send API request to get the data
 async function fetchData(token) {
-  console.log({ token });
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {
@@ -27,7 +26,7 @@ async function fetchData(token) {
   });
 
   if (!response.ok) {
-    console.error("Failed to fetch data from server:", response.statusText);
+    console.error("Failed to fetch files from server:", response.statusText);
     process.exit(1);
   }
 
@@ -49,7 +48,6 @@ async function generateFiles(data) {
 
     // Write file content
     fs.writeFileSync(filePath, item.content);
-    console.log(`Created: ${filePath}`);
   }
 }
 
@@ -94,28 +92,19 @@ function jsonToFiles(jsonData, rootDir) {
     const dir = path.dirname(fullFilePath); // Extract directory path
 
     // Debug: Log the directory and full file path
-    console.log(`Attempting to create directory: ${dir}`);
-    console.log(`Full file path for content: ${fullFilePath}`);
 
     // Ensure directory exists before writing the file
     if (!fs.existsSync(dir)) {
       try {
         fs.mkdirSync(dir, { recursive: true });
-        console.log(`Directory created: ${dir}`);
-      } catch (error) {
-        console.error(`Error creating directory: ${error}`);
-      }
+      } catch (error) {}
     } else {
-      console.log(`Directory already exists: ${dir}`);
     }
 
     // Write the file content
     try {
       fs.writeFileSync(fullFilePath, file.content, "utf-8");
-      console.log(`File created: ${fullFilePath}`);
-    } catch (error) {
-      console.error(`Error writing file: ${error}`);
-    }
+    } catch (error) {}
   });
 }
 // Main function

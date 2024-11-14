@@ -1,6 +1,6 @@
 {
   "name": "temgen",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A CLI tool to generate templates for MERN stack applications, including React, Redux, Next.js, Node.js, Mongoose, PostgreSQL, and Prisma configurations.",
   "main": "index.js",
   "scripts": {
