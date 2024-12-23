@@ -1,78 +1,81 @@
 #!/usr/bin/env node
-
 import fetch from "node-fetch"; // or axios
 import fs from "fs";
 import path from "path";
-import archiver from "archiver";
+import ora from "ora"; // For the spinner loader
 
-const apiUrl = "https://ts-module-creator.onrender.com/cli/generate"; // Replace with your API URL
+const apiUrl = "https://server.temgen.app/api/v1/cli/generate"; // Replace with your API URL
 
 // Parse token from command line arguments
 const token = process.argv[2];
 const undoFlag = process.argv[3] === "-undo";
 
 if (!token) {
-  console.error("Error: Token is required. Usage: npx temgen <token>");
+  console.error(
+    "\x1b[31mError: Token is required. Usage: npx temgen <token>\x1b[0m"
+  );
   process.exit(1);
 }
 
-// Send API request to get the data
 async function fetchData(token) {
-  console.log("Fetching files from server...");
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ token })
-  });
+  const spinner = ora("Fetching files...").start();
 
-  if (!response.ok) {
-    console.error("Failed to fetch files from server:", response.statusText);
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ token })
+    });
+
+    if (!response.ok) {
+      spinner.fail(`Failed to fetch files: ${response.statusText}`);
+      process.exit(1);
+    }
+
+    spinner.succeed("Files fetched successfully.");
+    return await response.json();
+  } catch (error) {
+    spinner.fail("An error occurred while fetching files.");
+    console.error("\x1b[31mError:\x1b[0m", error.message);
     process.exit(1);
   }
-
-  return await response.json();
 }
 
 function deleteFiles(jsonData) {
-  // First delete all files
   try {
     jsonData.forEach((file) => {
       const fullFilePath = path.join(
         process.cwd(),
         file.filePath.split(`\\`).join("/")
       );
-      fs.unlinkSync(fullFilePath);
-    });
-  } catch (error) {}
-  // Get unique directories from the jsonData
-  const directories = [
-    ...new Set(
-      jsonData.map((file) => {
-        const filePath = file.filePath.split(`\\`).join("/");
-        return path.dirname(path.join(process.cwd(), filePath));
-      })
-    )
-  ].sort((a, b) => b.length - a.length); // Sort by depth (deepest first)
-
-  // Try to delete each directory if empty
-  directories.forEach((dir) => {
-    try {
-      // Check if directory exists and is empty
-      if (fs.existsSync(dir)) {
-        const items = fs.readdirSync(dir);
-        if (items.length === 0) {
-          fs.rmdirSync(dir);
-        }
+      if (fs.existsSync(fullFilePath)) {
+        fs.unlinkSync(fullFilePath);
       }
-    } catch (error) {
-      // Ignore errors (directory might not be empty or might have permissions issues)
-    }
-  });
+    });
+
+    const directories = [
+      ...new Set(
+        jsonData.map((file) => {
+          const filePath = file.filePath.split(`\\`).join("/");
+          return path.dirname(path.join(process.cwd(), filePath));
+        })
+      )
+    ].sort((a, b) => b.length - a.length);
+
+    directories.forEach((dir) => {
+      if (fs.existsSync(dir) && fs.readdirSync(dir).length === 0) {
+        fs.rmdirSync(dir);
+      }
+    });
+  } catch (error) {
+    console.error(
+      "\x1b[33mWarning:\x1b[0m Could not delete some files or directories."
+    );
+  }
 }
-// Call the function
 
 function jsonToFiles(jsonData, rootDir) {
   jsonData.forEach((file) => {
@@ -80,34 +83,33 @@ function jsonToFiles(jsonData, rootDir) {
       rootDir,
       file.filePath.split(`\\`).join("/")
     );
-    const dir = path.dirname(fullFilePath); // Extract directory path
+    const dir = path.dirname(fullFilePath);
 
-    // Debug: Log the directory and full file path
-
-    // Ensure directory exists before writing the file
     if (!fs.existsSync(dir)) {
-      try {
-        fs.mkdirSync(dir, { recursive: true });
-      } catch (error) {}
-    } else {
+      fs.mkdirSync(dir, { recursive: true });
     }
 
-    // Write the file content
-    try {
-      fs.writeFileSync(fullFilePath, file.content, "utf-8");
-    } catch (error) {}
+    fs.writeFileSync(fullFilePath, file.content, "utf-8");
   });
 }
-// Main function
+
 (async () => {
+  const spinner = ora("Processing...").start();
   try {
     const data = await fetchData(token);
+
     if (!undoFlag) {
+      spinner.text = "Creating files...";
       jsonToFiles(data.data, process.cwd());
+      spinner.succeed("Files created successfully.");
     } else {
+      spinner.text = "Deleting files...";
       deleteFiles(data.data);
+      spinner.succeed("Files deleted successfully.");
     }
   } catch (error) {
-    console.error("Error:", error);
+    spinner.fail("An error occurred.");
+    console.error("\x1b[31mError:\x1b[0m", error.message);
+    process.exit(1);
   }
 })();
