@@ -1,7 +1,7 @@
 {
   "name": "temgen",
   "version": "1.1.0",
-  "description": "A CLI tool to generate templates for MERN stack applications, including React, Redux, Next.js, Node.js, Mongoose, PostgreSQL, and Prisma configurations.",
+  "description": "A CLI tool to generate full-stack templates for MERN applications with React, Redux, Next.js, Node.js, Mongoose, PostgreSQL, and Prisma configurations. Simplify your project setup in seconds.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
