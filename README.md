@@ -1,6 +1,8 @@
 # Temgen
 
-**Temgen** is a CLI tool that generates template files for MERN (MongoDB, Express, React, Node.js) and other stacks, including React with Redux, Next.js, Node.js with Mongoose or PostgreSQL using Prisma. This package allows you to quickly scaffold projects with predefined templates to streamline your development process.
+**Temgen** is a CLI tool that generates template files for MERN (MongoDB, Express, React, Node.js) and other stacks, including React with Redux, Next.js, Node.js with Mongoose, or PostgreSQL using Prisma. This package allows you to quickly scaffold projects with predefined templates to streamline your development process.
+
+Visit the [official Temgen homepage](https://temgen.app) for more details and updates.
 
 ## Installation
 
